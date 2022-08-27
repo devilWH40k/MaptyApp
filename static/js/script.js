@@ -23,6 +23,9 @@ class App {
         // getting position and loading the map
         this._getPosition();
 
+        // get data from local storage
+        this._getLocalStorage();
+
         // attaching Event Listeners
         form.addEventListener('submit', this._newWorkout.bind(this));
 
@@ -63,6 +66,11 @@ class App {
 
         // handling clicks on map
         this.#map.on('click', this._showForm.bind(this));
+
+        // map should be loaded before rendering the markers from the local storage
+        this.#workouts.forEach(work => {
+            this._renderWorkoutMarker(work);
+        });
     }
 
     _showForm(mapE) {
@@ -153,6 +161,9 @@ class App {
 
         // clear input fields and hide a form
         this._hideForm();
+
+        // Set local storage to all workouts
+        this._setLocalStorage();
     }
 
     _renderWorkoutMarker(workout) {
@@ -236,6 +247,27 @@ class App {
             duration: 1,
         });
     }
+
+    _setLocalStorage() {
+        localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+    }
+
+    _getLocalStorage() {
+        const workoutsData = JSON.parse(localStorage.getItem('workouts'));
+
+        if (!workoutsData) return;
+
+        this.#workouts = workoutsData;
+
+        this.#workouts.forEach(work => {
+            this._renderWorkout(work);
+        });
+    }
+
+    resetLocalStorage() {
+        localStorage.removeItem('workouts');
+        location.reload();
+    }
 }
 
 // WORKOUTS
@@ -251,7 +283,7 @@ class Workout {
         this.duration = duration;
     }
 
-    get description() {
+    _setDescription() {
         const workoutDate = this.date;
         const workoutType = this.type;
         const typeCapitalized = workoutType.replace(
@@ -264,7 +296,7 @@ class Workout {
         } ${this.date.getDate()}
         `;
 
-        return workoutDesc;
+        this.description = workoutDesc;
     }
 }
 
@@ -274,11 +306,9 @@ class Running extends Workout {
     constructor(coords, distance, duration, cadence) {
         super(coords, distance, duration);
         this.cadence = cadence;
-    }
+        this.pace = this.duration / this.distance;
 
-    get pace() {
-        // min/km
-        return this.duration / this.distance;
+        this._setDescription();
     }
 }
 
@@ -288,11 +318,9 @@ class Cycling extends Workout {
     constructor(coords, distance, duration, elevationGain) {
         super(coords, distance, duration);
         this.elevationGain = elevationGain;
-    }
+        this.speed = this.distance / (this.duration / 60);
 
-    get speed() {
-        // km/h
-        return this.distance / (this.duration / 60);
+        this._setDescription();
     }
 }
 
