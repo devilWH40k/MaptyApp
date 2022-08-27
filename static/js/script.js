@@ -325,9 +325,3 @@ class Cycling extends Workout {
 }
 
 const app = new App();
-console.log(app);
-
-const run1 = new Running([39, -12], 5.2, 24, 178);
-const run2 = new Running([39, -12.08], 9, 40, 150);
-
-const cycling1 = new Cycling([23, -6], 17, 120, 523);
