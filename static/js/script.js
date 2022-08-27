@@ -1,7 +1,7 @@
 'use strict';
 
 // prettier-ignore
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // Selected elements
 const form = document.querySelector('.form');
@@ -61,6 +61,18 @@ class App {
         this.#mapEvent = mapE;
         form.classList.remove('hidden');
         inputDistance.focus();
+    }
+
+    _hideForm() {
+        inputDistance.value =
+            inputDuration.value =
+            inputCadence.value =
+            inputElevation.value =
+                '';
+
+        form.style.display = 'none';
+        form.classList.add('hidden');
+        setTimeout(() => (form.style.display = 'grid'), 1000);
     }
 
     _toggleElevationField() {
@@ -130,15 +142,10 @@ class App {
         this._renderWorkoutMarker(workout);
 
         // Render workout on a list
+        this._renderWorkout(workout);
 
         // clear input fields and hide a form
-        inputDistance.value =
-            inputDuration.value =
-            inputCadence.value =
-            inputElevation.value =
-                '';
-
-        form.classList.add('hidden');
+        this._hideForm();
     }
 
     _renderWorkoutMarker(workout) {
@@ -154,8 +161,58 @@ class App {
         L.marker(workout.coords)
             .addTo(this.#map)
             .bindPopup(markerPopup)
-            .setPopupContent(workout.distance + '')
+            .setPopupContent(
+                `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${
+                    workout.description
+                }`
+            )
             .openPopup();
+    }
+
+    _renderWorkout(workout) {
+        const workoutHTML = `
+        <li class="workout workout--${workout.type}" data-id="${workout.id}">
+            <h2 class="workout__title">${workout.description}</h2>
+            <div class="workout__details">
+                <span class="workout__icon">${
+                    workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'
+                }</span>
+                <span class="workout__value">${workout.distance}</span>
+                <span class="workout__unit">km</span>
+            </div>
+            <div class="workout__details">
+                <span class="workout__icon">⏱</span>
+                <span class="workout__value">${workout.duration}</span>
+                <span class="workout__unit">min</span>
+            </div>
+            <div class="workout__details">
+                <span class="workout__icon">⚡️</span>
+                <span class="workout__value">${(workout.type === 'running'
+                    ? workout.pace
+                    : workout.speed
+                ).toFixed(2)}
+                </span>
+                <span class="workout__unit">${
+                    workout.type === 'running' ? 'min/km' : 'km/h'
+                }</span>
+            </div>
+            <div class="workout__details">
+                <span class="workout__icon">${
+                    workout.type === 'running' ? '🦶🏼' : '⛰'
+                }</span>
+                <span class="workout__value">${
+                    workout.type === 'running'
+                        ? workout.cadence
+                        : workout.elevationGain
+                }</span>
+                <span class="workout__unit">${
+                    workout.type === 'running' ? 'spm' : 'm'
+                }</span>
+            </div>
+        </li>
+        `;
+
+        form.insertAdjacentHTML('afterend', workoutHTML);
     }
 }
 
@@ -170,6 +227,22 @@ class Workout {
         this.coords = coords; // [lat, lng]
         this.distance = distance;
         this.duration = duration;
+    }
+
+    get description() {
+        const workoutDate = this.date;
+        const workoutType = this.type;
+        const typeCapitalized = workoutType.replace(
+            workoutType[0],
+            workoutType[0].toUpperCase()
+        );
+
+        const workoutDesc = `${typeCapitalized} on ${
+            MONTHS[workoutDate.getMonth()]
+        } ${this.date.getDate()}
+        `;
+
+        return workoutDesc;
     }
 }
 
