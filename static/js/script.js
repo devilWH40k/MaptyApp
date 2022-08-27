@@ -16,6 +16,7 @@ const inputElevation = document.querySelector('.form__input--elevation');
 class App {
     #map;
     #mapEvent;
+    #mapZoomLevel = 15;
     #workouts = [];
 
     constructor() {
@@ -25,7 +26,14 @@ class App {
         // attaching Event Listeners
         form.addEventListener('submit', this._newWorkout.bind(this));
 
+        // changing input field (from pace to elevation)
         inputType.addEventListener('change', this._toggleElevationField);
+
+        // rendering workout list click
+        containerWorkouts.addEventListener(
+            'click',
+            this._moveToMarker.bind(this)
+        );
     }
 
     _getPosition() {
@@ -46,7 +54,7 @@ class App {
         const coords = [latitude, longitude];
 
         // L.map(<id of map div>) L - namespace with a couple of methods
-        this.#map = L.map('map').setView(coords, 15);
+        this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
 
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
             attribution:
@@ -135,7 +143,6 @@ class App {
         }
 
         // add new object to workout array
-        console.log(workout);
         this.#workouts.push(workout);
 
         // Render workout on a map as a marker
@@ -213,6 +220,21 @@ class App {
         `;
 
         form.insertAdjacentHTML('afterend', workoutHTML);
+    }
+
+    _moveToMarker(e) {
+        const workoutEl = e.target.closest('.workout');
+
+        if (!workoutEl) return;
+
+        const workout = this.#workouts.find(
+            work => work.id === workoutEl.dataset.id
+        );
+        const workoutCoords = workout.coords;
+        this.#map.setView(workoutCoords, this.#mapZoomLevel, {
+            animate: true,
+            duration: 1,
+        });
     }
 }
 
